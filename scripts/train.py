@@ -51,14 +51,14 @@ def train():
 
 
     #delete old checkpoints and tensorboard stuff
-    if tf.gfile.Exists(checkpoint_dir):
-        tf.gfile.DeleteRecursively(checkpoint_dir)
+    if tf.io.gfile.exists(checkpoint_dir):
+        tf.io.gfile.rmtree(checkpoint_dir)
 
-    if tf.gfile.Exists(tb_dir):
-        tf.gfile.DeleteRecursively(tb_dir)
+    if tf.io.gfile.exists(tb_dir):
+        tf.io.gfile.rmtree(tb_dir)
 
-    tf.gfile.MakeDirs(tb_dir)
-    tf.gfile.MakeDirs(checkpoint_dir)
+    tf.io.gfile.makedirs(tb_dir)
+    tf.io.gfile.makedirs(checkpoint_dir)
 
 
 
@@ -122,8 +122,8 @@ def train():
     print("Batch size: {}".format(cfg.BATCH_SIZE))
 
     #tf config and session
-    config = tf.ConfigProto(allow_soft_placement=True)
-    sess = tf.Session(config=config)
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+    sess = tf.compat.v1.Session(config=config)
     K.set_session(sess)
 
 
@@ -215,48 +215,20 @@ def train():
     #create train generator
     train_generator = generator_from_data_path(img_names, gt_names, config=cfg)
 
-    #make model parallel if specified
-    if GPUS > 1:
-
-        #use multigpu model checkpoint
-        ckp_saver = ModelCheckpointMultiGPU(checkpoint_dir + "/model.{epoch:02d}-{loss:.2f}.hdf5", monitor='loss', verbose=0,
-                                    save_best_only=False,
-                                    save_weights_only=True, mode='auto', period=1)
-
-        cb.append(ckp_saver)
+    ckp_saver = ModelCheckpoint(checkpoint_dir + "/model.{epoch:02d}-{loss:.2f}.hdf5", monitor='loss', verbose=0,
+                                save_best_only=False,
+                                save_weights_only=True, mode='auto', period=1)
+    cb.append(ckp_saver)
 
 
-        print("Using multi gpu support with {} GPUs".format(GPUS))
+    print("Using single GPU")
+    #compile model from squeeze object, loss is not a function of model directly
+    squeeze.model.compile(optimizer=opt,
+                          loss=[squeeze.loss], metrics=[squeeze.loss_without_regularization, squeeze.bbox_loss, squeeze.class_loss, squeeze.conf_loss])
 
-        # make the model parallel
-        parallel_model = multi_gpu_model(squeeze.model, gpus=GPUS)
-        parallel_model.compile(optimizer=opt,
-                              loss=[squeeze.loss], metrics=[squeeze.loss_without_regularization, squeeze.bbox_loss, squeeze.class_loss, squeeze.conf_loss])
-
-
-
-        #actually do the training
-        parallel_model.fit_generator(train_generator, epochs=EPOCHS,
-                                        steps_per_epoch=nbatches_train, callbacks=cb)
-
-
-    else:
-
-        # add a checkpoint saver
-        ckp_saver = ModelCheckpoint(checkpoint_dir + "/model.{epoch:02d}-{loss:.2f}.hdf5", monitor='loss', verbose=0,
-                                    save_best_only=False,
-                                    save_weights_only=True, mode='auto', period=1)
-        cb.append(ckp_saver)
-
-
-        print("Using single GPU")
-        #compile model from squeeze object, loss is not a function of model directly
-        squeeze.model.compile(optimizer=opt,
-                              loss=[squeeze.loss], metrics=[squeeze.loss_without_regularization, squeeze.bbox_loss, squeeze.class_loss, squeeze.conf_loss])
-
-        #actually do the training
-        squeeze.model.fit_generator(train_generator, epochs=EPOCHS,
-                                        steps_per_epoch=nbatches_train, callbacks=cb)
+    #actually do the training
+    squeeze.model.fit_generator(train_generator, epochs=EPOCHS,
+                                    steps_per_epoch=nbatches_train, callbacks=cb)
 
 
     gc.collect()

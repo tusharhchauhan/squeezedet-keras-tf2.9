@@ -147,9 +147,10 @@ class SqueezeDet():
         #return K.concatenate( [input, pad], axis=-1)
 
 
-        padding = np.zeros((3,2))
-        padding[2,1] = 4
-        return tf.pad(input, padding ,"CONSTANT")
+        padding = tf.constant([[0, 0], [0, 0], [0, 4]])
+        # padding = np.zeros((3, 2))
+        # padding[2, 1] = 4
+        return tf.pad(input, padding, "CONSTANT")
 
 
 

@@ -79,8 +79,8 @@ def eval():
 
 
     #tf config and session
-    config = tf.ConfigProto(allow_soft_placement=True)
-    sess = tf.Session(config=config)
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+    sess = tf.compat.v1.Session(config=config)
     K.set_session(sess)
 
 
@@ -110,11 +110,11 @@ def eval():
     )
 
     #create placeholders for metrics. Variables get assigned these.
-    loss_placeholder = tf.placeholder(loss_var.dtype, shape=())
-    loss_without_regularization_placeholder = tf.placeholder(loss_without_regularization_var.dtype, shape=())
-    conf_loss_placeholder = tf.placeholder(conf_loss_var.dtype, shape=())
-    class_loss_placeholder = tf.placeholder(class_loss_var.dtype, shape=())
-    bbox_loss_placeholder = tf.placeholder(bbox_loss_var.dtype, shape=())
+    loss_placeholder = tf.compat.v1.placeholder(loss_var.dtype, shape=())
+    loss_without_regularization_placeholder = tf.compat.v1.placeholder(loss_without_regularization_var.dtype, shape=())
+    conf_loss_placeholder = tf.compat.v1.placeholder(conf_loss_var.dtype, shape=())
+    class_loss_placeholder = tf.compat.v1.placeholder(class_loss_var.dtype, shape=())
+    bbox_loss_placeholder = tf.compat.v1.placeholder(bbox_loss_var.dtype, shape=())
 
 
     #we have to create the assign ops here and call the assign ops with a feed dict, otherwise memory leak
@@ -133,7 +133,7 @@ def eval():
 
     #variables for images to visualize
     images_with_boxes = tf.Variable(  initial_value = np.zeros((cfg.VISUALIZATION_BATCH_SIZE, cfg.IMAGE_HEIGHT, cfg.IMAGE_WIDTH, 3)), name="image", dtype=tf.float32)
-    update_placeholder = tf.placeholder(images_with_boxes.dtype, shape=images_with_boxes.get_shape())
+    update_placeholder = tf.compat.v1.placeholder(images_with_boxes.dtype, shape=images_with_boxes.get_shape())
     update_images = images_with_boxes.assign(update_placeholder)
 
     tf.summary.image("images", images_with_boxes, max_outputs=cfg.VISUALIZATION_BATCH_SIZE )
@@ -177,18 +177,18 @@ def eval():
         ))
 
         precision_placeholders.append(
-            tf.placeholder(dtype=precisions[i].dtype,
+            tf.compat.v1.placeholder(dtype=precisions[i].dtype,
                            shape=precisions[i].shape))
 
         recall_placeholders.append(
-            tf.placeholder(dtype=recalls[i].dtype,
+            tf.compat.v1.placeholder(dtype=recalls[i].dtype,
                            shape=recalls[i].shape))
         AP_placeholders.append(
-            tf.placeholder(dtype=APs[i].dtype,
+            tf.compat.v1.placeholder(dtype=APs[i].dtype,
                            shape=APs[i].shape))
 
         f1_placeholders.append(
-            tf.placeholder(dtype=f1s[i].dtype,
+            tf.compat.v1.placeholder(dtype=f1s[i].dtype,
                            shape=f1s[i].shape))
 
 
@@ -207,7 +207,7 @@ def eval():
         name="mAP", dtype=tf.float32
     )
 
-    mAP_placeholder = tf.placeholder(mAP.dtype, shape=())
+    mAP_placeholder = tf.compat.v1.placeholder(mAP.dtype, shape=())
 
     prmap_assign_ops.append(mAP.assign(mAP_placeholder))
 
@@ -220,15 +220,15 @@ def eval():
         tf.summary.scalar("AP/" + name, APs[i])
         tf.summary.scalar("f1/" + name, f1s[i])
 
-    merged = tf.summary.merge_all()
+    merged = tf.compat.v1.summary.merge_all()
 
     if STARTWITH is None:
         #check for tensorboard dir and delete old stuff
-        if tf.gfile.Exists(tensorboard_dir):
-            tf.gfile.DeleteRecursively(tensorboard_dir)
-        tf.gfile.MakeDirs(tensorboard_dir)
+        if tf.io.gfile.exists(tensorboard_dir):
+            tf.io.gfile.rmtree(tensorboard_dir)
+        tf.io.gfile.makedirs(tensorboard_dir)
 
-    writer = tf.summary.FileWriter(tensorboard_dir)
+    writer = tf.compat.v1.summary.FileWriter(tensorboard_dir)
 
 
     #instantiate model
@@ -495,11 +495,11 @@ def eval():
         )
 
         #we have to create the assign ops here and call the assign ops with a feed dictg, otherwise memory leak
-        test_loss_placeholder = tf.placeholder(loss_var.dtype, shape=())
-        test_loss_without_regularization_placeholder = tf.placeholder(loss_without_regularization_var.dtype, shape=())
-        test_conf_loss_placeholder = tf.placeholder(conf_loss_var.dtype, shape=())
-        test_class_loss_placeholder = tf.placeholder(class_loss_var.dtype, shape=())
-        test_bbox_loss_placeholder = tf.placeholder(bbox_loss_var.dtype, shape=())
+        test_loss_placeholder = tf.compat.v1.placeholder(loss_var.dtype, shape=())
+        test_loss_without_regularization_placeholder = tf.compat.v1.placeholder(loss_without_regularization_var.dtype, shape=())
+        test_conf_loss_placeholder = tf.compat.v1.placeholder(conf_loss_var.dtype, shape=())
+        test_class_loss_placeholder = tf.compat.v1.placeholder(class_loss_var.dtype, shape=())
+        test_bbox_loss_placeholder = tf.compat.v1.placeholder(bbox_loss_var.dtype, shape=())
 
         test_loss_assign_ops = [ test_loss_var.assign(test_loss_placeholder),
                             test_loss_without_regularization_var.assign(test_loss_without_regularization_placeholder),
@@ -548,18 +548,18 @@ def eval():
             ))
 
             precision_placeholders.append(
-                tf.placeholder(dtype=precisions[i].dtype,
+                tf.compat.v1.placeholder(dtype=precisions[i].dtype,
                                shape=precisions[i].shape))
 
             recall_placeholders.append(
-                tf.placeholder(dtype=recalls[i].dtype,
+                tf.compat.v1.placeholder(dtype=recalls[i].dtype,
                                shape=recalls[i].shape))
             AP_placeholders.append(
-                tf.placeholder(dtype=APs[i].dtype,
+                tf.compat.v1.placeholder(dtype=APs[i].dtype,
                                shape=APs[i].shape))
 
             f1_placeholders.append(
-                tf.placeholder(dtype=f1s[i].dtype,
+                tf.compat.v1.placeholder(dtype=f1s[i].dtype,
                                shape=f1s[i].shape))
 
 
@@ -575,7 +575,7 @@ def eval():
             name="mAP", dtype=tf.float32
         )
 
-        mAP_placeholder = tf.placeholder(test_mAP.dtype, shape=())
+        mAP_placeholder = tf.compat.v1.placeholder(test_mAP.dtype, shape=())
 
         prmap_assign_ops.append(test_mAP.assign(mAP_placeholder))
 
@@ -585,15 +585,15 @@ def eval():
         tf.summary.scalar("test/AP/" + name, APs[i], collections=["test"])
         tf.summary.scalar("test/f1/" + name, f1s[i], collections=["test"])
 
-        merged = tf.summary.merge_all(key="test")
+        merged = tf.compat.v1.summary.merge_all(key="test")
 
 
         #check for tensorboard dir and delete old stuff
-        if tf.gfile.Exists(tensorboard_dir_test):
-            tf.gfile.DeleteRecursively(tensorboard_dir_test)
-        tf.gfile.MakeDirs(tensorboard_dir_test)
+        if tf.io.gfile.exists(tensorboard_dir_test):
+            tf.io.gfile.rmtree(tensorboard_dir_test)
+        tf.io.gfile.makedirs(tensorboard_dir_test)
 
-        writer = tf.summary.FileWriter(tensorboard_dir_test)
+        writer = tf.compat.v1.summary.FileWriter(tensorboard_dir_test)
 
 
 
